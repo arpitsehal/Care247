@@ -56,7 +56,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ customers, fields }) => {
           return dob;
         }
       default:
-        const value = customer[field.name as keyof Customer];
+        const value = customer[fieldName as keyof Customer];
         return <span className="text-sm text-gray-900">{value || 'N/A'}</span>;
     }
   };

@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import path from 'path';
+import { promises as fs } from 'fs';
+
+// Path to your db.json file
+const dbPath = path.join(process.cwd(), 'db.json');
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -6,24 +11,34 @@ export async function GET(request: Request) {
   const lastName = searchParams.get('lastName');
   const dateOfBirth = searchParams.get('dateOfBirth');
 
-  // Build query parameters for JSON Server
-  const queryParams = new URLSearchParams();
-  
-  if (firstName) queryParams.append('firstName_like', firstName);
-  if (lastName) queryParams.append('lastName_like', lastName);
-  if (dateOfBirth) queryParams.append('dateOfBirth', dateOfBirth);
-
   try {
-    const response = await fetch(`http://localhost:3001/customers?${queryParams.toString()}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch customers');
+    // Read the db.json file
+    const fileContents = await fs.readFile(dbPath, 'utf8');
+    const data = JSON.parse(fileContents);
+    let customers = data.customers || [];
+
+    // Apply filters
+    if (firstName) {
+      customers = customers.filter((customer: any) => 
+        customer.firstName.toLowerCase().includes(firstName.toLowerCase())
+      );
     }
     
-    const customers = await response.json();
+    if (lastName) {
+      customers = customers.filter((customer: any) => 
+        customer.lastName.toLowerCase().includes(lastName.toLowerCase())
+      );
+    }
+    
+    if (dateOfBirth) {
+      customers = customers.filter((customer: any) => 
+        customer.dateOfBirth === dateOfBirth
+      );
+    }
+
     return NextResponse.json(customers);
   } catch (error) {
-    console.error('Error fetching customers:', error);
+    console.error('Error reading or processing db.json:', error);
     return NextResponse.json(
       { error: 'Failed to fetch customers' },
       { status: 500 }

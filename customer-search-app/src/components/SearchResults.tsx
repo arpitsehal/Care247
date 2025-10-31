@@ -1,5 +1,5 @@
 import React from 'react';
-import { Customer, FieldConfig } from '@/types';
+import { Customer, FieldConfig, Address, Phone, Email } from '@/types';
 
 interface SearchResultsProps {
   customers: Customer[];
@@ -57,7 +57,81 @@ const SearchResults: React.FC<SearchResultsProps> = ({ customers, fields }) => {
         }
       default:
         const value = customer[fieldName as keyof Customer];
-        return <span className="text-sm text-gray-900">{value || 'N/A'}</span>;
+        
+        // Handle array types
+        if (Array.isArray(value)) {
+          if (value.length === 0) return 'N/A';
+          
+          // Handle Address array
+          if (value[0] && 'street' in value[0]) {
+            return (
+              <div className="space-y-1">
+                {(value as Address[]).map((addr, idx) => (
+                  <div key={`${addr.street}-${idx}`} className="text-sm text-gray-900">
+                    <div>{addr.street}</div>
+                    <div>{addr.city}, {addr.state} {addr.zipCode}</div>
+                    <div className="text-xs text-gray-500">{addr.type}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          
+          // Handle Phone array
+          if (value[0] && 'number' in value[0]) {
+            return (
+              <div className="space-y-1">
+                {(value as Phone[]).map((phone, idx) => (
+                  <div key={`${phone.number}-${idx}`} className="text-sm">
+                    <a 
+                      href={`tel:${phone.number.replace(/\D/g, '')}`} 
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {phone.number}
+                    </a>
+                    {phone.isPrimary && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                        Primary
+                      </span>
+                    )}
+                    <div className="text-xs text-gray-500">{phone.type}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          
+          // Handle Email array
+          if (value[0] && 'address' in value[0]) {
+            return (
+              <div className="space-y-1">
+                {(value as Email[]).map((email, idx) => (
+                  <div key={`${email.address}-${idx}`} className="text-sm">
+                    <a 
+                      href={`mailto:${email.address}`} 
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {email.address}
+                    </a>
+                    {email.isPrimary && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                        Primary
+                      </span>
+                    )}
+                    <div className="text-xs text-gray-500">{email.type}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          
+          return value.join(', ');
+        }
+        
+        // Handle non-array values
+        return <span className="text-sm text-gray-900">
+          {value !== undefined && value !== null ? value.toString() : 'N/A'}
+        </span>;
     }
   };
 
